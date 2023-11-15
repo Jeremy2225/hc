@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>FHIR Anxiety Observation</title>
+    <script src="jsondata.json"></script>
+
+    <script>
+        var conditionObj = {
+            "resourceType": "Observation",
+            "status": "final",
+            "code": {
+                "coding": [
+                    {
+                        "system": "http://loinc.org",
+                        "code": "12345-6",
+                        "display": "焦慮症"
+                    }
+                ],
+                "text": "焦慮症"
+            },
+            "subject": {
+                "reference": "Patient/25016582"
+            },
+            "effectiveDateTime": "2023-10-17T08:00:00Z",
+            "component": [
+                {
+                    "code": {
+                        "coding": [
+                            {
+                                "system": "http://loinc.org",
+                                "code": "8302-2",
+                                "display": "中度焦慮"
+                            }
+                        ],
+                        "text": "中度焦慮"
+                    },
+                    "valueQuantity": {
+                        "value": 0,  // 初始值
+                        "unit": "cm",
+                        "system": "http://unitsofmeasure.org",
+                        "code": "cm"
+                    }
+                }
+            ]
+        }
+
+        function postData() {
+            // 更新中度焦慮的值
+            conditionObj.component[0].valueQuantity.value = parseFloat(document.getElementById("anxietyLevel").value);
+
+            var jsonStr = JSON.stringify(conditionObj);
+            var FHIRrootURL = "https://hapi.fhir.org/baseR4/";
+            var apiURL = FHIRrootURL + "Observation?subject=25016582";
+            HTTPGetData(apiURL, jsonStr);
+        }
+
+        function HTTPGetData(urlStr, dataStr) {
+            var HttpObj = new XMLHttpRequest();
+            HttpObj.open("POST", urlStr, true);
+            HttpObj.setRequestHeader("Content-type", "application/json+fhir");
+            // HttpObj.setRequestHeader("Content-type", "application/xml+fhir");
+            HttpObj.onreadystatechange = function () {
+                //alert(HttpObj.readyState);
+                if (HttpObj.readyState === 4) {
+                    ret = HttpObj.responseText;
+                    alert(ret);
+                    var jsonOBJ = JSON.parse(ret);
+                    if ("id" in jsonOBJ && jsonOBJ.hasOwnProperty("id"))
+                        alert("上傳成功！" + "問卷編號：" + jsonOBJ["id"]);
+                    else
+                        alert("上傳失敗！" + ret);
+                }
+            }
+
+            HttpObj.send(dataStr);
+            //  getData
+        }
+
+
+        function callBack(ret) {
+            console.log(ret);
+        }
+    </script>
+</head>
+
+<body>
+
+    <h1>焦慮症</h1>
+
+    <form id="observationForm">
+        <p>請上傳焦慮程度</p>
+
+        <label for="anxietyLevel">焦慮程度:</label>
+        <input type="number" id="anxietyLevel" step="0.1" /><br /><br />
+
+        <p></p>
+        <button type="button" onclick="postData()">上傳</button><br /><br />
+    </form>
+</body>
+
+</html>
